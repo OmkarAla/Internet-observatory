@@ -12,15 +12,16 @@ function App() {
   const [websites, setWebsites] = useState([]);
   const [apis, setApis] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [websiteError, setWebsiteError] = useState(null);
+  const [apiError, setApiError] = useState(null);
 
   const fetchWebsites = async () => {
     try {
       const response = await getWebsites();
       setWebsites(response.data);
-      setError(null);
+      setWebsiteError(null);
     } catch (err) {
-      setError('Failed to fetch websites');
+      setWebsiteError('Failed to fetch websites');
     } finally {
       setLoading(false);
     }
@@ -30,9 +31,11 @@ function App() {
     try {
       const response = await getApis();
       setApis(response.data);
-      setError(null);
+      setApiError(null);
     } catch (err) {
-      setError('Failed to fetch APIs');
+      setApiError('Failed to fetch APIs');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,7 +49,7 @@ function App() {
       await addWebsite(data);
       fetchWebsites();
     } catch (err) {
-      setError('Failed to add website');
+      setWebsiteError('Failed to add website');
     }
   };
 
@@ -55,7 +58,7 @@ function App() {
       await deleteWebsite(id);
       fetchWebsites();
     } catch (err) {
-      setError('Failed to delete website');
+      setWebsiteError('Failed to delete website');
     }
   };
 
@@ -64,7 +67,7 @@ function App() {
       await triggerCheck(id);
       fetchWebsites();
     } catch (err) {
-      setError('Failed to trigger check');
+      setWebsiteError('Failed to trigger check');
     }
   };
 
@@ -73,7 +76,7 @@ function App() {
       await addApi(data);
       fetchApis();
     } catch (err) {
-      setError('Failed to add API');
+      setApiError('Failed to add API');
     }
   };
 
@@ -82,7 +85,7 @@ function App() {
       await deleteApi(id);
       fetchApis();
     } catch (err) {
-      setError('Failed to delete API');
+      setApiError('Failed to delete API');
     }
   };
 
@@ -91,7 +94,7 @@ function App() {
       await triggerApiCheck(id);
       fetchApis();
     } catch (err) {
-      setError('Failed to trigger API check');
+      setApiError('Failed to trigger API check');
     }
   };
 
@@ -100,9 +103,15 @@ function App() {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Internet Observatory</h1>
         
-        {error && (
+        {websiteError && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+            {websiteError}
+          </div>
+        )}
+
+        {apiError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {apiError}
           </div>
         )}
 
