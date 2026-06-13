@@ -159,7 +159,7 @@ router.post('/:apiId/check', async (req, res) => {
       const isJson = response.headers['content-type']?.includes('application/json');
       let jsonValid = true;
       
-      if (isJson && api.method !== 'HEAD') {
+      if (isJson && api.method !== 'HEAD' && typeof response.data === 'string') {
         try {
           JSON.parse(response.data);
         } catch {
