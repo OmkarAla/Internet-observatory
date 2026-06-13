@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import websiteRoutes from './routes/websites.js';
 import checkRoutes from './routes/checks.js';
+import apiRoutes from './routes/apis.js';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use('/api/websites', websiteRoutes);
 app.use('/api/websites', checkRoutes);
+app.use('/api/apis', apiRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
