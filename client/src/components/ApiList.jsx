@@ -4,8 +4,8 @@ import ApiCheckHistory from './ApiCheckHistory';
 
 function ApiList({ apis, onDelete, onCheck }) {
   const [expanded, setExpanded] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyMap, setHistoryMap] = useState({});
+  const [loadingMap, setLoadingMap] = useState({});
 
   const handleExpand = async (id) => {
     if (expanded === id) {
@@ -13,14 +13,14 @@ function ApiList({ apis, onDelete, onCheck }) {
       return;
     }
     setExpanded(id);
-    setLoadingHistory(true);
+    setLoadingMap((prev) => ({ ...prev, [id]: true }));
     try {
       const response = await getApiCheckHistory(id);
-      setHistory(response.data);
+      setHistoryMap((prev) => ({ ...prev, [id]: response.data }));
     } catch (err) {
       console.error('Failed to load history');
     } finally {
-      setLoadingHistory(false);
+      setLoadingMap((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -81,7 +81,7 @@ function ApiList({ apis, onDelete, onCheck }) {
             </div>
           </div>
           {expanded === api._id && (
-            <ApiCheckHistory history={history} loading={loadingHistory} />
+            <ApiCheckHistory history={historyMap[api._id] || []} loading={loadingMap[api._id] || false} />
           )}
         </div>
       ))}
