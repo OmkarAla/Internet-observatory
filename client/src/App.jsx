@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
-import { getWebsites, addWebsite, deleteWebsite, triggerCheck } from './services/api';
+import { 
+  getWebsites, addWebsite, deleteWebsite, triggerCheck,
+  getApis, addApi, deleteApi, triggerApiCheck
+} from './services/api';
 import WebsiteList from './components/WebsiteList';
 import WebsiteForm from './components/WebsiteForm';
+import ApiList from './components/ApiList';
+import ApiForm from './components/ApiForm';
 
 function App() {
   const [websites, setWebsites] = useState([]);
+  const [apis, setApis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -20,11 +26,22 @@ function App() {
     }
   };
 
+  const fetchApis = async () => {
+    try {
+      const response = await getApis();
+      setApis(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch APIs');
+    }
+  };
+
   useEffect(() => {
     fetchWebsites();
+    fetchApis();
   }, []);
 
-  const handleAdd = async (data) => {
+  const handleAddWebsite = async (data) => {
     try {
       await addWebsite(data);
       fetchWebsites();
@@ -33,7 +50,7 @@ function App() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteWebsite = async (id) => {
     try {
       await deleteWebsite(id);
       fetchWebsites();
@@ -42,7 +59,7 @@ function App() {
     }
   };
 
-  const handleCheck = async (id) => {
+  const handleCheckWebsite = async (id) => {
     try {
       await triggerCheck(id);
       fetchWebsites();
@@ -51,9 +68,36 @@ function App() {
     }
   };
 
+  const handleAddApi = async (data) => {
+    try {
+      await addApi(data);
+      fetchApis();
+    } catch (err) {
+      setError('Failed to add API');
+    }
+  };
+
+  const handleDeleteApi = async (id) => {
+    try {
+      await deleteApi(id);
+      fetchApis();
+    } catch (err) {
+      setError('Failed to delete API');
+    }
+  };
+
+  const handleCheckApi = async (id) => {
+    try {
+      await triggerApiCheck(id);
+      fetchApis();
+    } catch (err) {
+      setError('Failed to trigger API check');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Internet Observatory</h1>
         
         {error && (
@@ -63,9 +107,10 @@ function App() {
         )}
 
         <div className="grid gap-6">
+          {/* Website Monitoring Section */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Add Website</h2>
-            <WebsiteForm onSubmit={handleAdd} />
+            <WebsiteForm onSubmit={handleAddWebsite} />
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">
@@ -75,8 +120,27 @@ function App() {
             ) : (
               <WebsiteList 
                 websites={websites} 
-                onDelete={handleDelete}
-                onCheck={handleCheck}
+                onDelete={handleDeleteWebsite}
+                onCheck={handleCheckWebsite}
+              />
+            )}
+          </div>
+
+          {/* API Monitoring Section */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Add API</h2>
+            <ApiForm onSubmit={handleAddApi} />
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Monitored APIs</h2>
+            {loading ? (
+              <p className="text-gray-500">Loading...</p>
+            ) : (
+              <ApiList 
+                apis={apis} 
+                onDelete={handleDeleteApi}
+                onCheck={handleCheckApi}
               />
             )}
           </div>
