@@ -7,7 +7,7 @@ const router = express.Router();
 
 const TIMEOUT_MS = 10000;
 
-router.get('/:websiteId', async (req, res) => {
+router.get('/:websiteId/checks', async (req, res) => {
   try {
     const checks = await CheckResult.find({ websiteId: req.params.websiteId })
       .sort({ checkedAt: -1 })
@@ -18,7 +18,7 @@ router.get('/:websiteId', async (req, res) => {
   }
 });
 
-router.post('/:websiteId', async (req, res) => {
+router.post('/:websiteId/check', async (req, res) => {
   try {
     const website = await Website.findById(req.params.websiteId);
     if (!website) {

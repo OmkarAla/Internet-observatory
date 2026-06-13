@@ -33,8 +33,9 @@ const circuitBreakers = new Map();
  * Get or create circuit breaker for an API
  */
 export const getCircuitBreaker = (apiId) => {
-  if (!circuitBreakers.has(apiId)) {
-    circuitBreakers.set(apiId, {
+  const key = apiId.toString();
+  if (!circuitBreakers.has(key)) {
+    circuitBreakers.set(key, {
       state: CircuitState.CLOSED,
       failureCount: 0,
       successCount: 0,
@@ -48,7 +49,7 @@ export const getCircuitBreaker = (apiId) => {
       }
     });
   }
-  return circuitBreakers.get(apiId);
+  return circuitBreakers.get(key);
 };
 
 /**
