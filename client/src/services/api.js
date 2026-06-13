@@ -10,4 +10,11 @@ export const deleteWebsite = (id) => api.delete(`/websites/${id}`);
 export const triggerCheck = (id) => api.post(`/websites/${id}/check`);
 export const getCheckHistory = (id) => api.get(`/websites/${id}/checks`);
 
+// API endpoints
+export const getApis = () => api.get('/apis');
+export const addApi = (data) => api.post('/apis', data);
+export const deleteApi = (id) => api.delete(`/apis/${id}`);
+export const triggerApiCheck = (id) => api.post(`/apis/${id}/check`);
+export const getApiCheckHistory = (id) => api.get(`/apis/${id}/checks`);
+
 export default api;
