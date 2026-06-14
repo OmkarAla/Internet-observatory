@@ -3,3 +3,8 @@ dist/
 .env
 *.log
 .DS_Store
+
+# Personal learning files (not project code)
+lesson.md
+quiz.md
+PROGRESS.md
