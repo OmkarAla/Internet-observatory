@@ -1,6 +1,6 @@
 # Internet Observatory - Progress Report
 
-## Current Status: Phase 2 COMPLETE (Pending Integration Test)
+## Current Status: Phase 2 COMPLETE ✅ (Integration Tested)
 
 ---
 
@@ -13,7 +13,7 @@
 - CRUD operations for websites
 - Check triggering and history viewing
 
-### Phase 2: API Observatory ✅ (11/12 tasks complete)
+### Phase 2: API Observatory ✅ (12/12 tasks complete)
 
 #### Completed Tasks:
 1. ✅ **API Model** (`server/models/Api.js`) - Schema for API endpoints with method, headers, expectedStatus, timeout, retries
@@ -28,14 +28,26 @@
 10. ✅ **API List Component** (`client/src/components/ApiList.jsx`) - Lists APIs with circuit breaker badges
 11. ✅ **Update App Component** (`client/src/App.jsx`) - Added API monitoring section
 
-#### Remaining Task:
-12. ⏳ **Integration Testing** - Manual testing of full system
+#### Integration Test Results (2026-06-14):
+12. ✅ **Integration Testing** - Full system verified via API calls
+
+| Test | Result |
+|------|--------|
+| Backend starts + connects MongoDB Atlas | ✅ |
+| Frontend Vite dev server starts | ✅ |
+| Add website via POST /api/websites | ✅ |
+| Check website → status 200, 232ms | ✅ |
+| Add API via POST /api/apis | ✅ |
+| Check API → status 200, 36ms | ✅ |
+| Circuit breaker shows CLOSED | ✅ |
+| Trip to OPEN after 5 failures | ✅ |
+| Fast-fail when OPEN (0ms, no request) | ✅ |
 
 ---
 
 ## Next Session: Start Here
 
-### Step 1: Verify servers start correctly
+### Step 1: Start servers
 
 ```bash
 # Terminal 1 - Start backend
@@ -47,31 +59,14 @@ cd D:\famili-vc-basep\Internet-Observatory\client
 npm run dev
 ```
 
-### Step 2: Test website monitoring (existing)
-1. Open http://localhost:5173
-2. Add a website (e.g., "Google" with URL "https://google.com")
-3. Click "Check Now"
-4. Verify result appears (UP or DOWN)
-5. Click "View History" to see past checks
+### Step 2: Open browser
+Navigate to http://localhost:5173
 
-### Step 3: Test API monitoring (new)
-1. Add an API (e.g., "GitHub API" with URL "https://api.github.com/users/octocat")
-2. Click "Check Now"
-3. Verify result appears with status code and response time
-4. Click "View History" to see past checks
-5. Verify circuit breaker badge shows "CLOSED"
-
-### Step 4: Test circuit breaker
-1. Add an API with an invalid URL (e.g., "https://invalid.example.com")
-2. Click "Check Now" 5 times
-3. Verify circuit breaker badge changes to "OPEN"
-4. Click "Check Now" again
-5. Verify the check fails immediately (no retry, fast response)
-
-### Step 5: Commit
-```bash
-git commit -m "feat: complete Phase 2 API observatory with retry and circuit breaker"
-```
+### Step 3: Begin Phase 3 - Real-Time Dashboard
+- Add Socket.IO to backend
+- Implement WebSocket connections
+- Add live status updates
+- See Phase 3 plan in `docs/superpowers/plans/`
 
 ---
 
@@ -92,6 +87,9 @@ git commit -m "feat: complete Phase 2 API observatory with retry and circuit bre
 ## Git History
 
 ```
+0131320 chore: add package-lock.json files
+025e533 fix: route paths, circuit breaker key handling, and add .gitignore
+cb0fe84 docs: add progress report for Phase 2 completion
 5cc1c85 fix: error handling and loading state bugs in App
 e3daaf1 fix: shared history and loading state bugs in API list
 7c9a4df fix: JSON validation bug with axios auto-parsing
