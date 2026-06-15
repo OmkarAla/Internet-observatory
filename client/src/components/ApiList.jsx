@@ -1,11 +1,42 @@
-import { useState } from 'react';
-import { getApiCheckHistory } from '../services/api';
+import { useState, useEffect } from 'react';
+import { getApiCheckHistory, setApiInterval } from '../services/api';
 import ApiCheckHistory from './ApiCheckHistory';
+import StatusAlert from './StatusAlert';
+import AutoCheckToggle from './AutoCheckToggle';
 
-function ApiList({ apis, onDelete, onCheck }) {
+function ApiList({ apis, onDelete, onCheck, subscribe, unsubscribe, onCheckResult }) {
   const [expanded, setExpanded] = useState(null);
-  const [historyMap, setHistoryMap] = useState({});
-  const [loadingMap, setLoadingMap] = useState({});
+  const [history, setHistory] = useState({});
+  const [loadingHistory, setLoadingHistory] = useState({});
+  const [liveResults, setLiveResults] = useState({});
+  const [alerts, setAlerts] = useState({});
+  const [previousStatus, setPreviousStatus] = useState({});
+
+  useEffect(() => {
+    const cleanup = onCheckResult(({ id, type, result }) => {
+      if (type !== 'api') return;
+
+      setLiveResults(prev => ({
+        ...prev,
+        [id]: [result, ...(prev[id] || [])]
+      }));
+
+      if (previousStatus[id] !== undefined && previousStatus[id] !== result.success) {
+        setAlerts(prev => ({
+          ...prev,
+          [id]: { isDown: !result.success, timestamp: Date.now() }
+        }));
+      }
+      setPreviousStatus(prev => ({ ...prev, [id]: result.success }));
+    });
+
+    return cleanup;
+  }, [onCheckResult, previousStatus]);
+
+  useEffect(() => {
+    apis.forEach(a => subscribe(a._id, 'api'));
+    return () => apis.forEach(a => unsubscribe(a._id, 'api'));
+  }, [apis, subscribe, unsubscribe]);
 
   const handleExpand = async (id) => {
     if (expanded === id) {
@@ -13,26 +44,32 @@ function ApiList({ apis, onDelete, onCheck }) {
       return;
     }
     setExpanded(id);
-    setLoadingMap((prev) => ({ ...prev, [id]: true }));
+    setLoadingHistory(prev => ({ ...prev, [id]: true }));
     try {
       const response = await getApiCheckHistory(id);
-      setHistoryMap((prev) => ({ ...prev, [id]: response.data }));
+      setHistory(prev => ({ ...prev, [id]: response.data }));
     } catch (err) {
       console.error('Failed to load history');
     } finally {
-      setLoadingMap((prev) => ({ ...prev, [id]: false }));
+      setLoadingHistory(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleIntervalChange = async (id, interval) => {
+    try {
+      await setApiInterval(id, interval);
+    } catch (err) {
+      console.error('Failed to update interval');
     }
   };
 
   const getCircuitBreakerBadge = (breaker) => {
     if (!breaker) return null;
-    
     const colors = {
       CLOSED: 'bg-green-100 text-green-800',
       OPEN: 'bg-red-100 text-red-800',
       HALF_OPEN: 'bg-yellow-100 text-yellow-800'
     };
-    
     return (
       <span className={`px-2 py-1 rounded text-xs ${colors[breaker.state] || 'bg-gray-100'}`}>
         {breaker.state}
@@ -48,7 +85,12 @@ function ApiList({ apis, onDelete, onCheck }) {
     <div className="space-y-4">
       {apis.map((api) => (
         <div key={api._id} className="border rounded p-4">
-          <div className="flex justify-between items-center">
+          <StatusAlert 
+            isDown={alerts[api._id]?.isDown} 
+            timestamp={alerts[api._id]?.timestamp} 
+          />
+          
+          <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-lg">{api.name}</h3>
@@ -58,7 +100,22 @@ function ApiList({ apis, onDelete, onCheck }) {
                 <span className="font-mono bg-gray-100 px-1 rounded">{api.method}</span>
                 {' '}{api.url}
               </p>
+              
+              {liveResults[api._id]?.[0] && (
+                <p className="text-sm mt-1">
+                  <span className={liveResults[api._id][0].success ? 'text-green-600' : 'text-red-600'}>
+                    {liveResults[api._id][0].success ? 'UP' : 'DOWN'}
+                  </span>
+                  {' • '}{liveResults[api._id][0].status || 'N/A'} • {liveResults[api._id][0].responseTime}ms
+                </p>
+              )}
+              
+              <AutoCheckToggle 
+                checkInterval={api.checkInterval}
+                onIntervalChange={(interval) => handleIntervalChange(api._id, interval)}
+              />
             </div>
+            
             <div className="space-x-2">
               <button
                 onClick={() => onCheck(api._id)}
@@ -80,8 +137,12 @@ function ApiList({ apis, onDelete, onCheck }) {
               </button>
             </div>
           </div>
+          
           {expanded === api._id && (
-            <ApiCheckHistory history={historyMap[api._id] || []} loading={loadingMap[api._id] || false} />
+            <ApiCheckHistory 
+              history={[...(liveResults[api._id] || []), ...(history[api._id] || [])]} 
+              loading={loadingHistory[api._id]} 
+            />
           )}
         </div>
       ))}

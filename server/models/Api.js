@@ -36,6 +36,11 @@ const apiSchema = new mongoose.Schema({
   enabled: {
     type: Boolean,
     default: true
+  },
+  checkInterval: {
+    type: Number,
+    default: null,
+    min: 10000
   }
 }, {
   timestamps: true

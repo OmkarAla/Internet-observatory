@@ -17,4 +17,11 @@ export const deleteApi = (id) => api.delete(`/apis/${id}`);
 export const triggerApiCheck = (id) => api.post(`/apis/${id}/check`);
 export const getApiCheckHistory = (id) => api.get(`/apis/${id}/checks`);
 
+// Interval endpoints
+export const setWebsiteInterval = (id, checkInterval) => 
+  api.patch(`/websites/${id}/interval`, { checkInterval });
+
+export const setApiInterval = (id, checkInterval) => 
+  api.patch(`/apis/${id}/interval`, { checkInterval });
+
 export default api;

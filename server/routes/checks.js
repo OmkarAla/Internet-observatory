@@ -7,6 +7,49 @@ const router = express.Router();
 
 const TIMEOUT_MS = 10000;
 
+export const checkWebsite = async (websiteId) => {
+  const website = await Website.findById(websiteId);
+  if (!website) {
+    throw new Error('Website not found');
+  }
+
+  const startTime = Date.now();
+  let result;
+
+  try {
+    const response = await axios.get(website.url, {
+      timeout: TIMEOUT_MS,
+      validateStatus: () => true
+    });
+    
+    const responseTime = Date.now() - startTime;
+    const success = response.status >= 200 && response.status < 300;
+    
+    result = new CheckResult({
+      websiteId: website._id,
+      status: response.status,
+      success,
+      responseTime,
+      error: null,
+      checkedAt: new Date()
+    });
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    
+    result = new CheckResult({
+      websiteId: website._id,
+      status: null,
+      success: false,
+      responseTime,
+      error: error.message,
+      checkedAt: new Date()
+    });
+  }
+
+  await result.save();
+  return result;
+};
+
 router.get('/:websiteId/checks', async (req, res) => {
   try {
     const checks = await CheckResult.find({ websiteId: req.params.websiteId })
@@ -20,45 +63,7 @@ router.get('/:websiteId/checks', async (req, res) => {
 
 router.post('/:websiteId/check', async (req, res) => {
   try {
-    const website = await Website.findById(req.params.websiteId);
-    if (!website) {
-      return res.status(404).json({ error: 'Website not found' });
-    }
-
-    const startTime = Date.now();
-    let result;
-
-    try {
-      const response = await axios.get(website.url, {
-        timeout: TIMEOUT_MS,
-        validateStatus: () => true
-      });
-      
-      const responseTime = Date.now() - startTime;
-      const success = response.status >= 200 && response.status < 300;
-      
-      result = new CheckResult({
-        websiteId: website._id,
-        status: response.status,
-        success,
-        responseTime,
-        error: null,
-        checkedAt: new Date()
-      });
-    } catch (error) {
-      const responseTime = Date.now() - startTime;
-      
-      result = new CheckResult({
-        websiteId: website._id,
-        status: null,
-        success: false,
-        responseTime,
-        error: error.message,
-        checkedAt: new Date()
-      });
-    }
-
-    await result.save();
+    const result = await checkWebsite(req.params.websiteId);
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

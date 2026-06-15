@@ -1,11 +1,42 @@
-import { useState } from 'react';
-import { getCheckHistory } from '../services/api';
+import { useState, useEffect } from 'react';
+import { getCheckHistory, setWebsiteInterval } from '../services/api';
 import CheckHistory from './CheckHistory';
+import StatusAlert from './StatusAlert';
+import AutoCheckToggle from './AutoCheckToggle';
 
-function WebsiteList({ websites, onDelete, onCheck }) {
+function WebsiteList({ websites, onDelete, onCheck, subscribe, unsubscribe, onCheckResult }) {
   const [expanded, setExpanded] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [history, setHistory] = useState({});
+  const [loadingHistory, setLoadingHistory] = useState({});
+  const [liveResults, setLiveResults] = useState({});
+  const [alerts, setAlerts] = useState({});
+  const [previousStatus, setPreviousStatus] = useState({});
+
+  useEffect(() => {
+    const cleanup = onCheckResult(({ id, type, result }) => {
+      if (type !== 'website') return;
+
+      setLiveResults(prev => ({
+        ...prev,
+        [id]: [result, ...(prev[id] || [])]
+      }));
+
+      if (previousStatus[id] !== undefined && previousStatus[id] !== result.success) {
+        setAlerts(prev => ({
+          ...prev,
+          [id]: { isDown: !result.success, timestamp: Date.now() }
+        }));
+      }
+      setPreviousStatus(prev => ({ ...prev, [id]: result.success }));
+    });
+
+    return cleanup;
+  }, [onCheckResult, previousStatus]);
+
+  useEffect(() => {
+    websites.forEach(w => subscribe(w._id, 'website'));
+    return () => websites.forEach(w => unsubscribe(w._id, 'website'));
+  }, [websites, subscribe, unsubscribe]);
 
   const handleExpand = async (id) => {
     if (expanded === id) {
@@ -13,14 +44,22 @@ function WebsiteList({ websites, onDelete, onCheck }) {
       return;
     }
     setExpanded(id);
-    setLoadingHistory(true);
+    setLoadingHistory(prev => ({ ...prev, [id]: true }));
     try {
       const response = await getCheckHistory(id);
-      setHistory(response.data);
+      setHistory(prev => ({ ...prev, [id]: response.data }));
     } catch (err) {
       console.error('Failed to load history');
     } finally {
-      setLoadingHistory(false);
+      setLoadingHistory(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleIntervalChange = async (id, interval) => {
+    try {
+      await setWebsiteInterval(id, interval);
+    } catch (err) {
+      console.error('Failed to update interval');
     }
   };
 
@@ -32,11 +71,31 @@ function WebsiteList({ websites, onDelete, onCheck }) {
     <div className="space-y-4">
       {websites.map((website) => (
         <div key={website._id} className="border rounded p-4">
-          <div className="flex justify-between items-center">
+          <StatusAlert 
+            isDown={alerts[website._id]?.isDown} 
+            timestamp={alerts[website._id]?.timestamp} 
+          />
+          
+          <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold text-lg">{website.name}</h3>
               <p className="text-gray-600 text-sm">{website.url}</p>
+              
+              {liveResults[website._id]?.[0] && (
+                <p className="text-sm mt-1">
+                  <span className={liveResults[website._id][0].success ? 'text-green-600' : 'text-red-600'}>
+                    {liveResults[website._id][0].success ? 'UP' : 'DOWN'}
+                  </span>
+                  {' • '}{liveResults[website._id][0].responseTime}ms
+                </p>
+              )}
+              
+              <AutoCheckToggle 
+                checkInterval={website.checkInterval}
+                onIntervalChange={(interval) => handleIntervalChange(website._id, interval)}
+              />
             </div>
+            
             <div className="space-x-2">
               <button
                 onClick={() => onCheck(website._id)}
@@ -58,8 +117,12 @@ function WebsiteList({ websites, onDelete, onCheck }) {
               </button>
             </div>
           </div>
+          
           {expanded === website._id && (
-            <CheckHistory history={history} loading={loadingHistory} />
+            <CheckHistory 
+              history={[...(liveResults[website._id] || []), ...(history[website._id] || [])]} 
+              loading={loadingHistory[website._id]} 
+            />
           )}
         </div>
       ))}

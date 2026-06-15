@@ -53,4 +53,28 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+router.patch('/:id/interval', async (req, res) => {
+  try {
+    const { checkInterval } = req.body;
+    
+    if (checkInterval !== null && (typeof checkInterval !== 'number' || checkInterval < 10000)) {
+      return res.status(400).json({ error: 'Interval must be null or >= 10000ms' });
+    }
+    
+    const website = await Website.findByIdAndUpdate(
+      req.params.id,
+      { checkInterval },
+      { new: true }
+    );
+    
+    if (!website) {
+      return res.status(404).json({ error: 'Website not found' });
+    }
+    
+    res.json(website);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

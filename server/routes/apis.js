@@ -7,15 +7,106 @@ import { shouldAllowRequest, recordSuccess, recordFailure, getCircuitStatus } fr
 
 const router = express.Router();
 
+export const checkApi = async (apiId) => {
+  const api = await Api.findById(apiId);
+  if (!api) {
+    throw new Error('API not found');
+  }
+
+  if (!shouldAllowRequest(api._id)) {
+    const result = new ApiCheckResult({
+      apiId: api._id,
+      status: null,
+      success: false,
+      error: 'Circuit breaker is OPEN - API marked as down',
+      responseTime: 0,
+      checkedAt: new Date()
+    });
+    await result.save();
+    return result;
+  }
+
+  const startTime = Date.now();
+  let result;
+
+  try {
+    const response = await retryWithBackoff(
+      async () => {
+        return await axios({
+          method: api.method,
+          url: api.url,
+          headers: api.headers,
+          timeout: api.timeout,
+          validateStatus: () => true
+        });
+      },
+      {
+        maxRetries: api.retries,
+        baseDelay: 1000,
+        maxDelay: 10000,
+        onRetry: ({ attempt, delay, error }) => {
+          console.log(`API ${api.name}: Retry ${attempt} after ${delay}ms - ${error}`);
+        }
+      }
+    );
+    
+    const responseTime = Date.now() - startTime;
+    
+    const statusMatch = response.status === api.expectedStatus;
+    const isJson = response.headers['content-type']?.includes('application/json');
+    let jsonValid = true;
+    
+    if (isJson && api.method !== 'HEAD' && typeof response.data === 'string') {
+      try {
+        JSON.parse(response.data);
+      } catch {
+        jsonValid = false;
+      }
+    }
+    
+    const success = statusMatch && jsonValid;
+    
+    if (success) {
+      recordSuccess(api._id);
+    } else {
+      recordFailure(api._id);
+    }
+    
+    result = new ApiCheckResult({
+      apiId: api._id,
+      status: response.status,
+      success,
+      responseTime,
+      error: success ? null : `Status: ${response.status}, JSON valid: ${jsonValid}`,
+      checkedAt: new Date()
+    });
+    
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    
+    recordFailure(api._id);
+    
+    result = new ApiCheckResult({
+      apiId: api._id,
+      status: null,
+      success: false,
+      responseTime,
+      error: error.message,
+      checkedAt: new Date()
+    });
+  }
+
+  await result.save();
+  return result;
+};
+
 /**
  * GET /api/apis
- * List all monitored APIs
  */
 router.get('/', async (req, res) => {
   try {
     const apis = await Api.find().sort({ createdAt: -1 });
     
-    // Attach circuit breaker status to each API
     const apisWithStatus = apis.map(api => ({
       ...api.toObject(),
       circuitBreaker: getCircuitStatus(api._id)
@@ -29,13 +120,11 @@ router.get('/', async (req, res) => {
 
 /**
  * POST /api/apis
- * Add new API to monitor
  */
 router.post('/', async (req, res) => {
   try {
     const { name, url, method, headers, expectedStatus, timeout, retries } = req.body;
     
-    // Validation
     if (!name || !url) {
       return res.status(400).json({ error: 'Name and URL are required' });
     }
@@ -65,7 +154,6 @@ router.post('/', async (req, res) => {
 
 /**
  * DELETE /api/apis/:id
- * Remove API from monitoring
  */
 router.delete('/:id', async (req, res) => {
   try {
@@ -81,7 +169,6 @@ router.delete('/:id', async (req, res) => {
 
 /**
  * GET /api/apis/:apiId/checks
- * Get check history for an API
  */
 router.get('/:apiId/checks', async (req, res) => {
   try {
@@ -96,114 +183,35 @@ router.get('/:apiId/checks', async (req, res) => {
 
 /**
  * POST /api/apis/:apiId/check
- * Trigger a check on an API
- * 
- * This is where the magic happens:
- * 1. Check circuit breaker state
- * 2. If circuit is OPEN, fail immediately
- * 3. If circuit is CLOSED or HALF_OPEN, make request with retries
- * 4. Record success/failure in circuit breaker
- * 5. Save result to database
  */
 router.post('/:apiId/check', async (req, res) => {
   try {
-    const api = await Api.findById(req.params.apiId);
+    const result = await checkApi(req.params.apiId);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.patch('/:id/interval', async (req, res) => {
+  try {
+    const { checkInterval } = req.body;
+    
+    if (checkInterval !== null && (typeof checkInterval !== 'number' || checkInterval < 10000)) {
+      return res.status(400).json({ error: 'Interval must be null or >= 10000ms' });
+    }
+    
+    const api = await Api.findByIdAndUpdate(
+      req.params.id,
+      { checkInterval },
+      { new: true }
+    );
+    
     if (!api) {
       return res.status(404).json({ error: 'API not found' });
     }
     
-    // Step 1: Check circuit breaker
-    if (!shouldAllowRequest(api._id)) {
-      // Circuit is OPEN - fail immediately
-      const result = new ApiCheckResult({
-        apiId: api._id,
-        status: null,
-        success: false,
-        error: 'Circuit breaker is OPEN - API marked as down',
-        responseTime: 0,
-        checkedAt: new Date()
-      });
-      await result.save();
-      return res.status(200).json(result);
-    }
-    
-    // Step 2: Make request with retries
-    const startTime = Date.now();
-    let result;
-    
-    try {
-      const response = await retryWithBackoff(
-        async () => {
-          return await axios({
-            method: api.method,
-            url: api.url,
-            headers: api.headers,
-            timeout: api.timeout,
-            validateStatus: () => true // Don't throw on any status
-          });
-        },
-        {
-          maxRetries: api.retries,
-          baseDelay: 1000,
-          maxDelay: 10000,
-          onRetry: ({ attempt, delay, error }) => {
-            console.log(`API ${api.name}: Retry ${attempt} after ${delay}ms - ${error}`);
-          }
-        }
-      );
-      
-      const responseTime = Date.now() - startTime;
-      
-      // Step 3: Validate response
-      const statusMatch = response.status === api.expectedStatus;
-      const isJson = response.headers['content-type']?.includes('application/json');
-      let jsonValid = true;
-      
-      if (isJson && api.method !== 'HEAD' && typeof response.data === 'string') {
-        try {
-          JSON.parse(response.data);
-        } catch {
-          jsonValid = false;
-        }
-      }
-      
-      const success = statusMatch && jsonValid;
-      
-      // Step 4: Record in circuit breaker
-      if (success) {
-        recordSuccess(api._id);
-      } else {
-        recordFailure(api._id);
-      }
-      
-      // Step 5: Save result
-      result = new ApiCheckResult({
-        apiId: api._id,
-        status: response.status,
-        success,
-        responseTime,
-        error: success ? null : `Status: ${response.status}, JSON valid: ${jsonValid}`,
-        checkedAt: new Date()
-      });
-      
-    } catch (error) {
-      const responseTime = Date.now() - startTime;
-      
-      // Request failed completely (timeout, network error, etc.)
-      recordFailure(api._id);
-      
-      result = new ApiCheckResult({
-        apiId: api._id,
-        status: null,
-        success: false,
-        responseTime,
-        error: error.message,
-        checkedAt: new Date()
-      });
-    }
-    
-    await result.save();
-    res.status(201).json(result);
+    res.json(api);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
