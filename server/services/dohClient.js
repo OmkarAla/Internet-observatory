@@ -17,7 +17,7 @@ const CACHE_TTL = 30000;
 const QUERY_TIMEOUT = 5000;
 const cache = new Map();
 
-const getCacheKey = (domain, types) => `${domain}:${types.sort().join(',')}`;
+const getCacheKey = (domain, types) => `${domain}:${[...types].sort().join(',')}`;
 
 const getCached = (key) => {
   const entry = cache.get(key);
@@ -94,13 +94,16 @@ const querySingleResolver = async (resolverKey, domain, types) => {
 
 const getTypeCode = (type) => {
   const codes = { A: 1, AAAA: 28, MX: 15, NS: 2, CNAME: 5, TXT: 16, SOA: 6 };
-  return codes[type] || 1;
+  if (!codes[type]) throw new Error(`Unknown record type: ${type}`);
+  return codes[type];
 };
 
 const extractMxPriority = (data) => {
   const match = data.match(/^(\d+)\s+/);
   return match ? parseInt(match[1]) : 0;
 };
+
+export const clearCache = () => cache.clear();
 
 export const resolveDomain = async (domain, types = ['A', 'AAAA', 'MX', 'NS', 'CNAME', 'TXT', 'SOA']) => {
   const cacheKey = getCacheKey(domain, types);
@@ -111,27 +114,25 @@ export const resolveDomain = async (domain, types = ['A', 'AAAA', 'MX', 'NS', 'C
 
   const resolverKeys = Object.keys(RESOLVERS);
   const resolverPromises = resolverKeys.map((key) =>
-    querySingleResolver(key, domain, types).then((result) => ({
-      key,
-      ...result,
-      responseTime: Date.now() - startTime,
-    }))
+    querySingleResolver(key, domain, types)
+      .then((result) => ({
+        key,
+        ...result,
+        responseTime: Date.now() - startTime,
+      }))
+      .catch((error) => ({
+        key,
+        records: {},
+        responseTime: Date.now() - startTime,
+        error: 'Resolver failed',
+      }))
   );
 
-  const results = await Promise.allSettled(resolverPromises);
+  const results = await Promise.all(resolverPromises);
 
   const queries = {};
-  results.forEach((result) => {
-    if (result.status === 'fulfilled') {
-      const { key, records, error, responseTime } = result.value;
-      queries[key] = { records, responseTime, error };
-    } else {
-      queries[result.reason?.key || 'unknown'] = {
-        records: {},
-        responseTime: 0,
-        error: 'Resolver failed',
-      };
-    }
+  results.forEach(({ key, records, error, responseTime }) => {
+    queries[key] = { records, responseTime, error };
   });
 
   const response = {
