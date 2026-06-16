@@ -9,6 +9,7 @@ import WebsiteForm from './components/WebsiteForm';
 import ApiList from './components/ApiList';
 import ApiForm from './components/ApiForm';
 import DnsResolver from './components/DnsResolver';
+import WebCrawler from './components/WebCrawler';
 
 function App() {
   const [websites, setWebsites] = useState([]);
@@ -107,6 +108,7 @@ function App() {
     { id: 'websites', label: 'Websites' },
     { id: 'apis', label: 'APIs' },
     { id: 'dns', label: 'DNS Observatory' },
+    { id: 'crawler', label: 'Web Crawler' },
   ];
 
   return (
@@ -195,6 +197,12 @@ function App() {
         {activeTab === 'dns' && (
           <div className="bg-white rounded-lg shadow p-6">
             <DnsResolver />
+          </div>
+        )}
+
+        {activeTab === 'crawler' && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <WebCrawler />
           </div>
         )}
       </div>

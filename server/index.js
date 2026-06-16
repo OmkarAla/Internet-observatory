@@ -7,6 +7,7 @@ import websiteRoutes from './routes/websites.js';
 import checkRoutes from './routes/checks.js';
 import apiRoutes from './routes/apis.js';
 import dnsRoutes from './routes/dns.js';
+import crawlerRoutes from './routes/crawler.js';
 import { initSocketIO } from './services/socketService.js';
 import { loadTimersFromDB } from './services/timerManager.js';
 
@@ -22,6 +23,7 @@ app.use('/api/websites', websiteRoutes);
 app.use('/api/websites', checkRoutes);
 app.use('/api/apis', apiRoutes);
 app.use('/api/dns', dnsRoutes);
+app.use('/api/crawler', crawlerRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
