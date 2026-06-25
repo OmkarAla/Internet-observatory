@@ -1,3 +1,6 @@
+import dns from 'dns';
+dns.setServers(['8.8.8.8', '8.8.4.4', '175.101.64.8', '202.153.32.3']);
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -9,7 +12,7 @@ import apiRoutes from './routes/apis.js';
 import dnsRoutes from './routes/dns.js';
 import crawlerRoutes from './routes/crawler.js';
 import { initSocketIO } from './services/socketService.js';
-import { loadTimersFromDB } from './services/timerManager.js';
+import { loadTimersFromDB, getQueueStats } from './services/timerManager.js';
 
 dotenv.config();
 
@@ -26,7 +29,11 @@ app.use('/api/dns', dnsRoutes);
 app.use('/api/crawler', crawlerRoutes);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  const queueStats = getQueueStats();
+  res.json({ 
+    status: 'ok',
+    queue: queueStats
+  });
 });
 
 const PORT = process.env.PORT || 3001;
