@@ -12,6 +12,7 @@ import DnsResolver from './components/DnsResolver';
 import WebCrawler from './components/WebCrawler';
 import NetworkDiagnostics from './components/NetworkDiagnostics';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
+import CacheDemo from './components/CacheDemo';
 
 function App() {
   const [websites, setWebsites] = useState([]);
@@ -113,6 +114,7 @@ function App() {
     { id: 'crawler', label: 'Web Crawler' },
     { id: 'network', label: 'Network Diagnostics' },
     { id: 'analytics', label: 'Analytics' },
+    { id: 'cache', label: 'Cache' },
   ];
 
   return (
@@ -219,6 +221,12 @@ function App() {
         {activeTab === 'analytics' && (
           <div className="bg-white rounded-lg shadow p-6">
             <AnalyticsDashboard />
+          </div>
+        )}
+
+        {activeTab === 'cache' && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <CacheDemo />
           </div>
         )}
       </div>
