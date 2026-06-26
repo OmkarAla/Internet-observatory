@@ -14,6 +14,7 @@ import crawlerRoutes from './routes/crawler.js';
 import networkRoutes from './routes/network.js';
 import analyticsRoutes from './routes/analytics.js';
 import cacheRoutes from './routes/cache.js';
+import scalingRoutes from './routes/scaling.js';
 import { initSocketIO } from './services/socketService.js';
 import { loadTimersFromDB, getQueueStats } from './services/timerManager.js';
 import { ensureIndexes } from './services/analyticsService.js';
@@ -34,6 +35,7 @@ app.use('/api/crawler', crawlerRoutes);
 app.use('/api/network', networkRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/cache', cacheRoutes);
+app.use('/api/scaling', scalingRoutes);
 
 app.get('/health', (req, res) => {
   const queueStats = getQueueStats();
