@@ -11,6 +11,7 @@ import ApiForm from './components/ApiForm';
 import DnsResolver from './components/DnsResolver';
 import WebCrawler from './components/WebCrawler';
 import NetworkDiagnostics from './components/NetworkDiagnostics';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 
 function App() {
   const [websites, setWebsites] = useState([]);
@@ -111,6 +112,7 @@ function App() {
     { id: 'dns', label: 'DNS Observatory' },
     { id: 'crawler', label: 'Web Crawler' },
     { id: 'network', label: 'Network Diagnostics' },
+    { id: 'analytics', label: 'Analytics' },
   ];
 
   return (
@@ -211,6 +213,12 @@ function App() {
         {activeTab === 'network' && (
           <div className="bg-white rounded-lg shadow p-6">
             <NetworkDiagnostics />
+          </div>
+        )}
+
+        {activeTab === 'analytics' && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <AnalyticsDashboard />
           </div>
         )}
       </div>
