@@ -1,7 +1,8 @@
 import axios from 'axios';
+import config from '../config';
 
 const api = axios.create({
-  baseURL: '/api'
+  baseURL: `${config.apiUrl}/api`
 });
 
 export const getWebsites = () => api.get('/websites');

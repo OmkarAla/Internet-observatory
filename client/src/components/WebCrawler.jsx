@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 
 function WebCrawler() {
   const [url, setUrl] = useState('');
@@ -22,7 +23,7 @@ function WebCrawler() {
     try {
       let response;
       if (mode === 'single') {
-        response = await axios.get(`/api/crawler/crawl?url=${encodeURIComponent(url)}`);
+        response = await axios.get(`${config.apiUrl}/api/crawler/crawl?url=${encodeURIComponent(url)}`);
       } else {
         const params = new URLSearchParams({
           url,
@@ -31,7 +32,7 @@ function WebCrawler() {
           sameDomain: sameDomain.toString(),
           concurrency: concurrency.toString()
         });
-        response = await axios.get(`/api/crawler/bfs?${params}`);
+        response = await axios.get(`${config.apiUrl}/api/crawler/bfs?${params}`);
       }
       setResult(response.data);
     } catch (err) {

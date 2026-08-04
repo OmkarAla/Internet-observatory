@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 
-const API_BASE = 'http://localhost:3001/api/network';
+const API_BASE = `${config.apiUrl}/api/network`;
 
 const NetworkDiagnostics = () => {
   const [activeTest, setActiveTest] = useState('tcp');

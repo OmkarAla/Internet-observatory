@@ -4,6 +4,7 @@ import Api from '../models/Api.js';
 import ApiCheckResult from '../models/ApiCheckResult.js';
 import { retryWithBackoff } from '../services/retry.js';
 import { shouldAllowRequest, recordSuccess, recordFailure, getCircuitStatus } from '../services/circuitBreaker.js';
+import { broadcastCheckResult } from '../services/socketService.js';
 
 const router = express.Router();
 
@@ -187,6 +188,7 @@ router.get('/:apiId/checks', async (req, res) => {
 router.post('/:apiId/check', async (req, res) => {
   try {
     const result = await checkApi(req.params.apiId);
+    broadcastCheckResult(req.params.apiId, 'api', result);
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1,13 +1,42 @@
+# Dependencies
 node_modules/
-dist/
-.env
-*.log
-.DS_Store
 
-# Personal learning files (not project code)
+# Build output
+dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# AI assistant configs (not project code)
+.claude/
+.claudeignore
+.gitnexus/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
+# Playwright MCP
+.playwright-mcp/
+
+# Learning files (not project code)
 lesson.md
 quiz.md
 PROGRESS.md
 BRIEF.md
 PROJECT_BRIEF.md
 explain.md
+TEST-WALKTHROUGH.md

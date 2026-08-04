@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getApiCheckHistory, setApiInterval } from '../services/api';
 import ApiCheckHistory from './ApiCheckHistory';
 import StatusAlert from './StatusAlert';
@@ -10,7 +10,7 @@ function ApiList({ apis, onDelete, onCheck, subscribe, unsubscribe, onCheckResul
   const [loadingHistory, setLoadingHistory] = useState({});
   const [liveResults, setLiveResults] = useState({});
   const [alerts, setAlerts] = useState({});
-  const [previousStatus, setPreviousStatus] = useState({});
+  const previousStatusRef = useRef({});
 
   useEffect(() => {
     const cleanup = onCheckResult(({ id, type, result }) => {
@@ -21,17 +21,17 @@ function ApiList({ apis, onDelete, onCheck, subscribe, unsubscribe, onCheckResul
         [id]: [result, ...(prev[id] || [])]
       }));
 
-      if (previousStatus[id] !== undefined && previousStatus[id] !== result.success) {
+      if (previousStatusRef.current[id] !== undefined && previousStatusRef.current[id] !== result.success) {
         setAlerts(prev => ({
           ...prev,
           [id]: { isDown: !result.success, timestamp: Date.now() }
         }));
       }
-      setPreviousStatus(prev => ({ ...prev, [id]: result.success }));
+      previousStatusRef.current[id] = result.success;
     });
 
     return cleanup;
-  }, [onCheckResult, previousStatus]);
+  }, [onCheckResult]);
 
   useEffect(() => {
     apis.forEach(a => subscribe(a._id, 'api'));

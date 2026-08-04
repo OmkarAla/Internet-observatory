@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 import ResolutionChain from './ResolutionChain';
 import RecordsComparison from './RecordsComparison';
 import DeepDive from './DeepDive';
@@ -23,7 +24,7 @@ function DnsResolver() {
 
     try {
       const typesParam = selectedTypes.join(',');
-      const response = await axios.get(`/api/dns/resolve?domain=${encodeURIComponent(domain)}&types=${typesParam}`);
+      const response = await axios.get(`${config.apiUrl}/api/dns/resolve?domain=${encodeURIComponent(domain)}&types=${typesParam}`);
       setResult(response.data);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to resolve domain');

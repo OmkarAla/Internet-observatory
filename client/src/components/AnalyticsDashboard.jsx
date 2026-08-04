@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 
-const API_BASE = 'http://localhost:3001/api/analytics';
+const API_BASE = `${config.apiUrl}/api/analytics`;
 
 const AnalyticsDashboard = () => {
   const [data, setData] = useState(null);

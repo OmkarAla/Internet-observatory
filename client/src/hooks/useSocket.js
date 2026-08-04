@@ -1,11 +1,12 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import config from '../config';
 
 export const useSocket = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    socketRef.current = io('http://localhost:3001');
+    socketRef.current = io(config.wsUrl);
 
     socketRef.current.on('connect', () => {
       console.log('Connected to server');

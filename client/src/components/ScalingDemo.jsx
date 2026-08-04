@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 
-const API_BASE = 'http://localhost:3001/api/scaling';
+const API_BASE = `${config.apiUrl}/api/scaling`;
 
 const ScalingDemo = () => {
   const [activeTab, setActiveTab] = useState('rate-limit');

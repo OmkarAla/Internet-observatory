@@ -2,6 +2,7 @@ import express from 'express';
 import axios from 'axios';
 import Website from '../models/Website.js';
 import CheckResult from '../models/CheckResult.js';
+import { broadcastCheckResult } from '../services/socketService.js';
 
 const router = express.Router();
 
@@ -64,6 +65,7 @@ router.get('/:websiteId/checks', async (req, res) => {
 router.post('/:websiteId/check', async (req, res) => {
   try {
     const result = await checkWebsite(req.params.websiteId);
+    broadcastCheckResult(req.params.websiteId, 'website', result);
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
