@@ -101,10 +101,14 @@ const startServer = async () => {
 // Graceful shutdown
 const shutdown = (signal) => {
   console.log(`\n${signal} received. Shutting down gracefully...`);
-  httpServer.close(() => {
-    console.log('HTTP server closed.');
+  if (httpServer) {
+    httpServer.close(() => {
+      console.log('HTTP server closed.');
+      process.exit(0);
+    });
+  } else {
     process.exit(0);
-  });
+  }
 
   // Force shutdown after 10s
   setTimeout(() => {
