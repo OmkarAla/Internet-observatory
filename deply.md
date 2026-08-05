@@ -55,7 +55,7 @@ Frontend (Vercel)  →  Backend (Render)  →  MongoDB Atlas
    | `VITE_API_URL` | `https://internet-observatory-api.onrender.com` |
 5. Click **Deploy**
 6. Wait for deploy to finish
-7. Note your frontend URL: `https://your-app.vercel.app`
+7. Note your frontend URL: `https://internet-observatory-five.vercel.app/`
 
 ---
 
