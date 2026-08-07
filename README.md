@@ -2,6 +2,8 @@
 
 A full-stack monitoring platform that demonstrates real-world systems engineering concepts through working implementations — HTTP health checks, WebSocket real-time updates, circuit breakers, caching strategies, load balancing, and more.
 
+**Live:** [https://internet-observatory-five.vercel.app/](https://internet-observatory-five.vercel.app/)
+
 ---
 
 ## Features
@@ -70,7 +72,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173
+Open [https://internet-observatory-five.vercel.app/](https://internet-observatory-five.vercel.app/)
 
 ---
 
