@@ -1,63 +1,74 @@
 # AGENTS.md
 
-Instructions for AI coding agents working on this project.
+Instructions for AI coding agents modifying this repository.
 
 ---
 
-## Project Overview
+## Architecture
 
-Internet Observatory is a full-stack monitoring platform:
-- **Frontend:** React 18 + Vite + TailwindCSS (in `client/`)
-- **Backend:** Express + MongoDB + Socket.IO (in `server/`)
-- **Database:** MongoDB Atlas
+```
+client/ (React + Vite + TailwindCSS)
+    │
+    │ REST API + WebSocket (Socket.IO)
+    │
+server/ (Express + Mongoose + Socket.IO)
+    │
+    │ Mongoose ODM
+    │
+MongoDB Atlas
+```
+
+**Frontend:** Static React SPA. Two types of components:
+- Props-driven (`WebsiteList`, `ApiList`) — receive data/callbacks from `App.jsx`
+- Self-contained (`DnsResolver`, `WebCrawler`, `NetworkDiagnostics`, `AnalyticsDashboard`, `CacheDemo`, `ScalingDemo`) — manage own state, make direct Axios calls
+
+**Backend:** Express server with route modules mounted under `/api`. Business logic lives in `services/`, not in routes. Routes are thin handlers that delegate to services.
 
 ---
 
-## Quick Commands
+## Development Commands
 
 ```bash
-# Start server
-cd server && npm start
+# Server
+cd server && npm start          # Start server (port 3001)
+cd server && node --check index.js  # Syntax check
 
-# Start client (dev mode)
-cd client && npm run dev
-
-# Build client for production
-cd client && npm run build
-
-# Check server syntax
-node --check server/index.js
+# Client
+cd client && npm run dev        # Start dev server (port 5173)
+cd client && npm run build      # Production build
 ```
+
+No test framework is configured. No linter is configured.
 
 ---
 
 ## Code Structure
 
-### Client (`client/src/`)
-
-| Path | Purpose |
-|------|---------|
-| `App.jsx` | Main app, tab navigation, state management |
-| `components/` | UI components (one per feature) |
-| `hooks/useSocket.js` | Socket.IO connection and subscriptions |
-| `services/api.js` | Axios HTTP client for backend API |
-| `config.js` | Environment variable config (VITE_API_URL, VITE_WS_URL) |
-
 ### Server (`server/`)
 
 | Path | Purpose |
 |------|---------|
-| `index.js` | Entry point — Express setup, routes, Socket.IO init |
-| `routes/` | API route handlers (websites, apis, dns, crawler, etc.) |
-| `services/` | Business logic (socketService, timerManager, retry, etc.) |
-| `models/` | Mongoose schemas (Website, Api, CheckResult, etc.) |
-| `config/db.js` | MongoDB connection |
+| `index.js` | Entry point. Mounts routes, inits Socket.IO, starts server. |
+| `routes/*.js` | API route handlers. Thin — delegate to services. |
+| `services/*.js` | Business logic. One file per concern. |
+| `models/*.js` | Mongoose schemas. |
+| `config/db.js` | MongoDB connection. |
+
+### Client (`client/src/`)
+
+| Path | Purpose |
+|------|---------|
+| `App.jsx` | Tab navigation, state management, CRUD handlers. |
+| `components/*.jsx` | One component per feature tab. |
+| `hooks/useSocket.js` | Socket.IO connection, subscribe/unsubscribe, event listeners. |
+| `services/api.js` | Axios instance with all API functions. |
+| `config.js` | Reads `VITE_API_URL` and `VITE_WS_URL` from env. |
 
 ---
 
-## Key Patterns
+## Coding Conventions
 
-### API Routes
+### Server Routes
 
 All routes follow this pattern:
 ```javascript
@@ -71,67 +82,92 @@ router.get('/', async (req, res) => {
 });
 ```
 
-### WebSocket Events
+### WebSocket
 
-| Event | Direction | Payload |
-|-------|-----------|---------|
-| `subscribe` | Client → Server | `{ id, type }` |
-| `unsubscribe` | Client → Server | `{ id, type }` |
-| `check:result` | Server → Client | `{ id, type, result }` |
-| `circuit:change` | Server → Client | `{ id, state }` |
+- Client subscribes to room `{type}:{id}` via `subscribe(id, type)`
+- Server broadcasts via `broadcastCheckResult(id, type, result)` from `socketService.js`
+- Manual check triggers (POST `/check`) must call `broadcastCheckResult` after saving — the timer queue already does this, but route handlers need to do it explicitly
 
-### Frontend State
+### Frontend Components
 
-Components receive props from `App.jsx`:
-- `websites` / `apis` — current list
-- `onCheck(id)` — trigger manual check
-- `subscribe(id, type)` — join WebSocket room
-- `unsubscribe(id, type)` — leave WebSocket room
-- `onCheckResult(callback)` — listen for check results
+- Props-driven components receive: `websites`/`apis`, `onDelete`, `onCheck`, `subscribe`, `unsubscribe`, `onCheckResult`
+- Self-contained components use `config.apiUrl` directly (not the shared `api.js` service)
+- WebSocket subscription happens in `useEffect` cleanup — always unsubscribe on unmount
 
 ---
 
-## Environment Variables
+## How to Add Things
 
-### Server (`.env`)
-```
-MONGODB_URI=mongodb+srv://...
-PORT=3001
-CORS_ORIGINS=http://localhost:5173
-NODE_ENV=development
-```
+### New API Endpoint
 
-### Client (Vercel dashboard)
-```
-VITE_API_URL=http://localhost:3001
-VITE_WS_URL=http://localhost:3001
-```
+1. Create `server/routes/newroute.js`
+2. Import in `server/index.js`: `import newRoute from './routes/newroute.js'`
+3. Mount: `app.use('/api/newroute', newRoute)`
+4. Add client function in `client/src/services/api.js`
+5. Use in component
 
----
+### New Model
 
-## Deployment
-
-- **Frontend:** Vercel (auto-deploys from `main` branch)
-- **Backend:** Render (auto-deploys from `main` branch)
-- **CI/CD:** GitHub Actions (`.github/workflows/ci-cd.yml`)
-
-After pushing to `main`, both services auto-deploy.
-
----
-
-## Common Tasks
-
-### Add a new API endpoint
-1. Create route in `server/routes/newroute.js`
-2. Import and mount in `server/index.js`: `app.use('/api/newroute', newRoute)`
-3. Add API function in `client/src/services/api.js`
-4. Use in component
-
-### Add a new model
-1. Create schema in `server/models/NewModel.js`
+1. Create `server/models/NewModel.js` with Mongoose schema
 2. Import in route file where needed
 
-### Add a new tab
-1. Create component in `client/src/components/NewTab.jsx`
+### New Feature Tab
+
+1. Create `client/src/components/NewTab.jsx` (self-contained)
 2. Import in `App.jsx`
-3. Add to `tabs` array and render conditionally
+3. Add to `tabs` array: `{ id: 'newtab', label: 'New Tab' }`
+4. Add conditional render block
+
+### New Service
+
+1. Create `server/services/newservice.js`
+2. Import in route file that needs it
+
+---
+
+## Important Constraints
+
+- **Route handlers must be thin.** Business logic goes in `services/`, not in `routes/`.
+- **Manual check triggers must broadcast.** When adding a new check endpoint, call `broadcastCheckResult(id, type, result)` after saving to DB.
+- **WebSocket rooms are keyed by `{type}:{id}`.** The `subscribe` event expects `{ id, type }` in the payload.
+- **Self-contained components bypass `api.js`.** If you need to add an API function for a self-contained component, add it directly in the component using `config.apiUrl`.
+- **CORS is configurable.** The `CORS_ORIGINS` env var controls allowed origins. Default is `localhost:5173`.
+- **MongoDB connection uses TLS.** The `connectDB` function passes `{ tls: true }` to Mongoose.
+
+---
+
+## Common Pitfalls
+
+- **Adding a check route without broadcasting.** The `POST /:id/check` route must call `broadcastCheckResult` — otherwise the UI won't update in real-time.
+- **Forgetting WebSocket cleanup.** Always return a cleanup function from `useEffect` that calls `unsubscribe(id, type)`.
+- **Mixing self-contained and props-driven patterns.** New tabs should follow the self-contained pattern (like `DnsResolver`) unless they need shared state from `App.jsx`.
+- **Hardcoding API URLs.** Always use `config.apiUrl` from `config.js`, not hardcoded strings.
+- **Adding dependencies without checking.** The project uses minimal dependencies. Check `package.json` before adding new ones.
+
+---
+
+## Key Services Reference
+
+| Service | What It Does |
+|---------|-------------|
+| `timerManager.js` | Queue-based recurring check scheduler (replaces setInterval) |
+| `socketService.js` | Socket.IO setup and broadcast functions |
+| `circuitBreaker.js` | Three-state circuit breaker (CLOSED/OPEN/HALF_OPEN) |
+| `retry.js` | Exponential backoff with jitter |
+| `cacheService.js` | In-memory cache with LRU, TTL, stale-while-revalidate |
+| `analyticsService.js` | MongoDB aggregation pipelines |
+| `crawlerService.js` | BFS web crawler |
+| `networkService.js` | TCP/UDP/ICMP diagnostics |
+| `dohClient.js` | DNS-over-HTTPS client |
+| `scalingService.js` | Rate limiting, load balancing, bottleneck analysis |
+
+---
+
+## Verification
+
+After making changes:
+
+1. Syntax check: `node --check server/index.js`
+2. Client build: `cd client && npm run build`
+3. Manual test: start server + client, verify the feature works in browser
+4. If adding a new route, test with `curl` or browser dev tools
