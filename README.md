@@ -1,15 +1,13 @@
 # Internet Observatory
 
-A full-stack monitoring platform that demonstrates real-world systems engineering concepts — from HTTP health checks and WebSocket real-time updates to circuit breakers, caching strategies, and load balancing.
+A full-stack monitoring platform that demonstrates real-world systems engineering concepts through working implementations — HTTP health checks, WebSocket real-time updates, circuit breakers, caching strategies, load balancing, and more.
 
 ---
 
-## What It Does
+## Features
 
-Monitor websites and APIs while learning core systems engineering patterns through working implementations.
-
-| Feature | Concepts Demonstrated |
-|---------|----------------------|
+| Feature | What It Demonstrates |
+|---------|---------------------|
 | Website Monitor | HTTP checks, uptime tracking, response time history |
 | API Observatory | Retry with backoff, circuit breaker, response validation |
 | Real-Time Dashboard | Live WebSocket updates, auto-check scheduling |
@@ -34,14 +32,14 @@ Monitor websites and APIs while learning core systems engineering patterns throu
 
 ---
 
-## Local Development
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
 - MongoDB Atlas account (free tier works)
 
-### Setup
+### Installation
 
 ```bash
 git clone https://github.com/OmkarAla/Internet-observatory.git
@@ -51,8 +49,17 @@ cd Internet-observatory
 **Backend:**
 ```bash
 cd server
-cp .env.example .env   # Add your MONGODB_URI
 npm install
+```
+
+Create a `.env` file in `server/`:
+```
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?appName=<app>
+PORT=3001
+```
+
+Start the server:
+```bash
 npm start
 ```
 
@@ -87,65 +94,46 @@ Open http://localhost:5173
 
 ---
 
-## Deployment
-
-### Frontend → Vercel
-
-1. Push to GitHub
-2. Import repo at [vercel.com](https://vercel.com)
-3. Set **Root Directory** to `client`
-4. Add env var: `VITE_API_URL` = your Render backend URL
-5. Deploy
-
-### Backend → Render
-
-1. Create Web Service at [render.com](https://render.com)
-2. Connect GitHub repo
-3. Build Command: `cd server && npm install`
-4. Start Command: `cd server && node index.js`
-5. Add env vars:
-   - `MONGODB_URI` = your MongoDB Atlas connection string
-   - `CORS_ORIGINS` = your Vercel frontend URL
-   - `NODE_ENV` = `production`
-6. Deploy
-
-### MongoDB Atlas
-
-Add `0.0.0.0/0` to Network Access → IP Whitelist.
-
-### CI/CD
-
-GitHub Actions runs on every push to `main` — tests both services, then deploys to Vercel and Render.
-
-Required GitHub Secrets: `RENDER_SERVICE_ID`, `RENDER_API_KEY`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
-
----
-
 ## Project Structure
 
 ```
 Internet-Observatory/
 ├── client/                     # React frontend
 │   ├── src/
-│   │   ├── components/         # UI components
+│   │   ├── components/         # UI components (one per feature)
 │   │   ├── hooks/              # useSocket hook
-│   │   ├── services/           # API client
+│   │   ├── services/           # Axios API client
 │   │   └── config.js           # Environment config
+│   └── package.json
 ├── server/                     # Express backend
-│   ├── config/                 # Database connection
+│   ├── config/                 # MongoDB connection
 │   ├── models/                 # Mongoose schemas
-│   ├── routes/                 # API routes
+│   ├── routes/                 # API route handlers
 │   ├── services/               # Business logic
-│   └── index.js                # Entry point
+│   ├── index.js                # Entry point
+│   └── package.json
 ├── .github/workflows/          # CI/CD pipeline
-├── render.yaml                 # Render config
+├── render.yaml                 # Render deployment config
 └── README.md
 ```
 
 ---
 
+## Deployment
+
+See **[deploy.md](deploy.md)** for step-by-step instructions including CI/CD setup.
+
+**Quick summary:**
+
+1. **Backend → Render:** Create Web Service, connect repo, set build/start commands, add env vars
+2. **Frontend → Vercel:** Import repo, set root directory to `client`, add `VITE_API_URL`
+3. **MongoDB Atlas:** Add `0.0.0.0/0` to IP whitelist
+4. **CI/CD:** Add GitHub Secrets, pushes to `main` auto-deploy both services
+
+---
+
 ## Documentation
 
-- **[docs.md](docs.md)** — Architecture, data flows, API reference, design decisions
+- **[docs.md](docs.md)** — Architecture, data flows, full API reference, design decisions
 - **[AGENTS.md](AGENTS.md)** — Instructions for AI coding agents
-- **[deploy.md](deploy.md)** — Step-by-step deployment guide with CI/CD setup
+- **[deploy.md](deploy.md)** — Deployment guide with CI/CD setup
