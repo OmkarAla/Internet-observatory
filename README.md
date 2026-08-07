@@ -2,59 +2,23 @@
 
 A full-stack monitoring platform that demonstrates real-world systems engineering concepts — from HTTP health checks and WebSocket real-time updates to circuit breakers, caching strategies, and load balancing.
 
-Built with **React**, **Express**, **MongoDB**, and **Socket.IO**.
-
----
-
-## Live Demo
-
-- **Frontend:** [https://internet-observatory-five.vercel.app](https://internet-observatory-five.vercel.app)
-- **Backend:** [https://internet-observatory-api.onrender.com](https://internet-observatory-api.onrender.com)
-
 ---
 
 ## What It Does
 
-Internet Observatory is a hands-on laboratory for monitoring websites and APIs while learning core systems engineering concepts through working implementations.
+Monitor websites and APIs while learning core systems engineering patterns through working implementations.
 
-### Features
-
-| Feature | What It Demonstrates |
-|---------|---------------------|
-| **Website Monitor** | HTTP checks, uptime tracking, response time history |
-| **API Observatory** | Retry with exponential backoff, circuit breaker pattern, response validation |
-| **Real-Time Dashboard** | Live updates via WebSockets, automatic check scheduling |
-| **DNS Observatory** | DNS-over-HTTPS queries, resolution chain visualization, record comparison |
-| **Web Crawler** | BFS traversal, parallel fetching, error isolation |
-| **Network Diagnostics** | TCP/UDP/ICMP probes, traceroute, port scanning |
-| **Traffic Analytics** | MongoDB aggregation pipelines, indexes, time-series data |
-| **Caching** | TTL, LRU eviction, stale-while-revalidate, thundering herd protection |
-| **Scaling** | Rate limiting, load balancing, bottleneck analysis |
-
----
-
-## Architecture
-
-```
-┌─────────────────┐     WebSocket      ┌─────────────────┐
-│                 │ ◄──────────────────► │                 │
-│  React Client   │                     │  Express Server │
-│  (Vercel)       │     REST API        │  (Render)       │
-│                 │ ──────────────────► │                 │
-└─────────────────┘                     └────────┬────────┘
-                                                 │
-                                                 ▼
-                                        ┌─────────────────┐
-                                        │  MongoDB Atlas   │
-                                        │  (Database)      │
-                                        └─────────────────┘
-```
-
-**Frontend (Vercel):** Static React app served from CDN. Communicates with backend via REST API and WebSocket.
-
-**Backend (Render):** Node.js/Express server handling API requests, running health checks on a queue system, and broadcasting results via Socket.IO.
-
-**Database (MongoDB Atlas):** Stores website/API configs, check results, analytics data, and cache entries.
+| Feature | Concepts Demonstrated |
+|---------|----------------------|
+| Website Monitor | HTTP checks, uptime tracking, response time history |
+| API Observatory | Retry with backoff, circuit breaker, response validation |
+| Real-Time Dashboard | Live WebSocket updates, auto-check scheduling |
+| DNS Observatory | DNS-over-HTTPS, resolution chain visualization |
+| Web Crawler | BFS traversal, parallel fetching, error isolation |
+| Network Diagnostics | TCP/UDP/ICMP probes, traceroute, port scanning |
+| Traffic Analytics | MongoDB aggregation pipelines, indexes |
+| Caching | TTL, LRU eviction, stale-while-revalidate, thundering herd protection |
+| Scaling | Rate limiting, load balancing, bottleneck analysis |
 
 ---
 
@@ -80,23 +44,26 @@ Internet Observatory is a hands-on laboratory for monitoring websites and APIs w
 ### Setup
 
 ```bash
-# Clone the repo
 git clone https://github.com/OmkarAla/Internet-observatory.git
 cd Internet-observatory
+```
 
-# Backend
+**Backend:**
+```bash
 cd server
 cp .env.example .env   # Add your MONGODB_URI
 npm install
 npm start
+```
 
-# Frontend (new terminal)
+**Frontend (new terminal):**
+```bash
 cd client
 npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Open http://localhost:5173
 
 ---
 
@@ -125,17 +92,17 @@ Open [http://localhost:5173](http://localhost:5173)
 ### Frontend → Vercel
 
 1. Push to GitHub
-2. Go to [vercel.com](https://vercel.com) → Import repo
+2. Import repo at [vercel.com](https://vercel.com)
 3. Set **Root Directory** to `client`
 4. Add env var: `VITE_API_URL` = your Render backend URL
 5. Deploy
 
 ### Backend → Render
 
-1. Go to [render.com](https://render.com) → New Web Service
+1. Create Web Service at [render.com](https://render.com)
 2. Connect GitHub repo
-3. Set **Build Command:** `cd server && npm install`
-4. Set **Start Command:** `cd server && node index.js`
+3. Build Command: `cd server && npm install`
+4. Start Command: `cd server && node index.js`
 5. Add env vars:
    - `MONGODB_URI` = your MongoDB Atlas connection string
    - `CORS_ORIGINS` = your Vercel frontend URL
@@ -144,18 +111,13 @@ Open [http://localhost:5173](http://localhost:5173)
 
 ### MongoDB Atlas
 
-Add `0.0.0.0/0` to Network Access → IP Whitelist (allows Render's IPs).
+Add `0.0.0.0/0` to Network Access → IP Whitelist.
 
 ### CI/CD
 
-GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) runs on every push to `main`:
-1. Tests server and client
-2. Deploys server to Render
-3. Deploys client to Vercel
+GitHub Actions runs on every push to `main` — tests both services, then deploys to Vercel and Render.
 
-Requires these GitHub Secrets:
-- `RENDER_SERVICE_ID`, `RENDER_API_KEY`
-- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+Required GitHub Secrets: `RENDER_SERVICE_ID`, `RENDER_API_KEY`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 
 ---
 
@@ -165,32 +127,25 @@ Requires these GitHub Secrets:
 Internet-Observatory/
 ├── client/                     # React frontend
 │   ├── src/
-│   │   ├── components/         # UI components (WebsiteList, ApiList, DnsResolver, etc.)
-│   │   ├── hooks/              # Custom hooks (useSocket)
-│   │   ├── services/           # API client (api.js)
+│   │   ├── components/         # UI components
+│   │   ├── hooks/              # useSocket hook
+│   │   ├── services/           # API client
 │   │   └── config.js           # Environment config
-│   └── package.json
 ├── server/                     # Express backend
 │   ├── config/                 # Database connection
-│   ├── models/                 # Mongoose schemas (Website, Api, CheckResult, etc.)
-│   ├── routes/                 # API routes (websites, apis, dns, crawler, etc.)
-│   ├── services/               # Business logic (socketService, timerManager, etc.)
-│   ├── index.js                # Entry point
-│   └── package.json
+│   ├── models/                 # Mongoose schemas
+│   ├── routes/                 # API routes
+│   ├── services/               # Business logic
+│   └── index.js                # Entry point
 ├── .github/workflows/          # CI/CD pipeline
-├── vercel.json                 # Vercel deployment config
-├── render.yaml                 # Render deployment config
+├── render.yaml                 # Render config
 └── README.md
 ```
 
 ---
 
-## How It Works
+## Documentation
 
-See [HOW_IT_WORKS.md](HOW_IT_WORKS.md) for a detailed explanation of the architecture, data flows, and key design decisions.
-
----
-
-## License
-
-MIT
+- **[docs.md](docs.md)** — Architecture, data flows, API reference, design decisions
+- **[AGENTS.md](AGENTS.md)** — Instructions for AI coding agents
+- **[deply.md](deply.md)** — Step-by-step deployment guide with CI/CD setup
