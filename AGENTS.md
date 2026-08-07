@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for AI coding assistants working on this project.
+Instructions for AI coding agents working on this project.
 
 ---
 

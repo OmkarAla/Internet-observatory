@@ -148,4 +148,4 @@ Internet-Observatory/
 
 - **[docs.md](docs.md)** — Architecture, data flows, API reference, design decisions
 - **[AGENTS.md](AGENTS.md)** — Instructions for AI coding agents
-- **[deply.md](deply.md)** — Step-by-step deployment guide with CI/CD setup
+- **[deploy.md](deploy.md)** — Step-by-step deployment guide with CI/CD setup
