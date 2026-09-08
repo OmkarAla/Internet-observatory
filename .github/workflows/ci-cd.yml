@@ -116,8 +116,7 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Deploy to Vercel
-        working-directory: client
-        run: vercel --prod --token="${{ secrets.VERCEL_TOKEN }}"
+        run: vercel ./client --prod --token="${{ secrets.VERCEL_TOKEN }}"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
