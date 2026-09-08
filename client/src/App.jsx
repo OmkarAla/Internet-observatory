@@ -4,6 +4,7 @@ import {
   getApis, addApi, deleteApi, triggerApiCheck
 } from './services/api';
 import { useSocket } from './hooks/useSocket';
+import { Analytics } from '@vercel/analytics/react';
 import WebsiteList from './components/WebsiteList';
 import WebsiteForm from './components/WebsiteForm';
 import ApiList from './components/ApiList';
@@ -123,6 +124,7 @@ function App() {
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Internet Observatory</h1>
+        <Analytics />
 
         <div className="flex gap-1 mb-6 bg-white rounded-lg shadow p-1">
           {tabs.map((tab) => (
