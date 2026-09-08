@@ -32,13 +32,13 @@ jobs:
         run: npm ci
 
       - name: Lint (if configured)
-        run: npm run lint --if-present || true
+        run: npm run lint --if-present
 
       - name: Syntax check
         run: node --check index.js
 
       - name: Test (if configured)
-        run: npm test --if-present || true
+        run: npm test --if-present
 
   # =====================
   # CI: Test Client
@@ -65,13 +65,13 @@ jobs:
         run: npm ci
 
       - name: Lint (if configured)
-        run: npm run lint --if-present || true
+        run: npm run lint --if-present
 
       - name: Build
         run: npm run build
 
       - name: Test (if configured)
-        run: npm test --if-present || true
+        run: npm test --if-present
 
   # =====================
   # CD: Deploy Server to Render
@@ -88,7 +88,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to Render
-        uses: johnbeynon/render-deploy-action@v1.2.0
+        uses: johnbeynon/render-deploy-action@v0.0.8
         with:
           service-id: ${{ secrets.RENDER_SERVICE_ID }}
           api-key: ${{ secrets.RENDER_API_KEY }}
@@ -107,11 +107,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: client
-          vercel-args: '--prod'
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Deploy to Vercel
+        working-directory: client
+        run: vercel --prod --token="${{ secrets.VERCEL_TOKEN }}"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
